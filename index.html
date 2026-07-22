@@ -144,6 +144,59 @@
   </div>
 </section>
 
+<section id="unique" style="position:relative;">
+  <div class="route-rail"></div>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="stop"><span class="dot"></span><span class="label">Stop 03 — What sets us apart</span></div>
+      <h2>Not just tracking — built for what actually happens on the ground</h2>
+      <p>These are the details most van-tracking apps skip, and the reason schools and parents stick with Goschol.</p>
+    </div>
+
+    <div class="feature-highlight">
+      <div class="alarm-visual">🔔</div>
+      <div>
+        <span class="badge">Signature feature</span>
+        <h3>Arrival Alarm — impossible to miss</h3>
+        <p>When a driver types something like "waiting outside" or "I'm here," Goschol doesn't just send a quiet notification — it sets off a loud, looping alarm and vibration on the parent's phone. It rides on the phone's actual alarm audio channel, so it plays even if the ringer is silenced, and it keeps going until the parent taps "Stop Alarm." A pickup should never be missed because a phone was buried in a bag.</p>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <div class="ico">🗺️</div>
+        <h3>Floating navigation overlay</h3>
+        <p>A small draggable button sits on top of Google Maps mid-route, showing "Student Name (2/5)" with arrows to jump between stops — drivers never have to leave the Maps app.</p>
+      </div>
+      <div class="card">
+        <div class="ico">📱</div>
+        <h3>Home-screen widget</h3>
+        <p>A "Share Live Location" toggle plus three preset announcement buttons, usable straight from the launcher without opening the app.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔄</div>
+        <h3>Drag-to-reorder route</h3>
+        <p>Drivers arrange their student pickup list by dragging stops into the actual order they drive them.</p>
+      </div>
+      <div class="card">
+        <div class="ico">📅</div>
+        <h3>Server-locked attendance</h3>
+        <p>Parents mark a child absent ahead of time, but the edit cutoff is enforced against the school's server clock — not the phone's — closing the usual "change your device time" loophole.</p>
+      </div>
+      <div class="card">
+        <div class="ico">💳</div>
+        <h3>Human-verified payments</h3>
+        <p>Subscribe via UPI, submit the transaction ID and screenshot, and a real admin reviews and approves it — not a black-box auto-charge.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔍</div>
+        <h3>Find your school in-app</h3>
+        <p>Search and select your school directly, instead of needing a code from the driver to get started.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="preview" style="position:relative;">
   <div class="route-rail"></div>
   <div class="wrap">
@@ -324,14 +377,56 @@
 </footer>
 
 <script>
-  // 🔧 UPDATE THESE TWO LINES WITH EVERY NEW APK RELEASE — everything else updates automatically.
-  const APP_VERSION = "1.0.0";
-  const APK_URL = "downloads/goschol-v1.0.0.apk";
+  // 🔧 Auto-detects the latest APK from the /downloads folder in this GitHub repo.
+  // To ship a new build: just upload the .apk into the "downloads" folder with any
+  // name containing a version number (e.g. "Goschol v2.apk", "goschol-2.1.apk") —
+  // nothing on this page needs to be edited.
+  const GH_OWNER = "vanlink9090-bit";
+  const GH_REPO  = "Goschol-";
+  const GH_FOLDER = "downloads";
 
-  document.querySelectorAll('.app-version').forEach(el => { el.textContent = 'v' + APP_VERSION; });
-  const apkLink = document.getElementById('apkLink');
-  if (apkLink) { apkLink.href = APK_URL; apkLink.setAttribute('download', ''); }
+  function extractVersionParts(name){
+    const match = name.match(/(\d+)(?:[._-](\d+))?(?:[._-](\d+))?/);
+    if (!match) return [0,0,0];
+    return [parseInt(match[1]||0,10), parseInt(match[2]||0,10), parseInt(match[3]||0,10)];
+  }
+
+  async function loadLatestApk(){
+    const apkLink = document.getElementById('apkLink');
+    const note = document.querySelector('.download-note');
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FOLDER}`);
+      if (!res.ok) throw new Error('Could not read downloads folder (status ' + res.status + ')');
+      const files = await res.json();
+      const apks = Array.isArray(files) ? files.filter(f => f.name.toLowerCase().endsWith('.apk')) : [];
+      if (apks.length === 0) throw new Error('No APK found in downloads folder yet');
+
+      apks.sort((a, b) => {
+        const va = extractVersionParts(a.name), vb = extractVersionParts(b.name);
+        for (let i = 0; i < 3; i++) { if (va[i] !== vb[i]) return vb[i] - va[i]; }
+        return 0;
+      });
+
+      const latest = apks[0];
+      const v = extractVersionParts(latest.name);
+      let versionLabel = v.slice(0, v[2] ? 3 : (v[1] ? 2 : 1)).join('.');
+      if (!versionLabel) versionLabel = '1.0';
+
+      document.querySelectorAll('.app-version').forEach(el => { el.textContent = 'v' + versionLabel; });
+      if (apkLink) {
+        apkLink.href = latest.download_url;
+        apkLink.setAttribute('download', latest.name);
+      }
+      if (note) note.textContent = 'Always the latest build — just drop a new APK into the "downloads" folder and this page updates itself.';
+    } catch (err) {
+      console.error('APK auto-detect failed:', err);
+      if (note) note.textContent = 'Download link will go live once an APK is uploaded to the "downloads" folder.';
+    }
+  }
+
+  loadLatestApk();
 </script>
 
 </body>
-</html>
+  </html>
+  
